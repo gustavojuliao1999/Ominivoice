@@ -17,6 +17,8 @@ from faster_whisper import WhisperModel
 app = FastAPI(title="OmniVoice TTS + STT API")
 
 # Pastas
+MODELS_DIR = Path(__file__).parent / "modelos"
+MODELS_DIR.mkdir(exist_ok=True)
 CACHE_DIR = Path("cache_audios")
 CACHE_DIR.mkdir(exist_ok=True)
 
@@ -60,10 +62,17 @@ tts_model = OmniVoice.from_pretrained(
     "k2-fsa/OmniVoice",
     device_map=f"{device}:0" if device == "cuda" else device,
     dtype=torch.float16 if device == "cuda" else torch.float32,
+    cache_dir=str(MODELS_DIR / "huggingface"),
 )
 
 print("⏳ Carregando Whisper large-v3...")
-whisper_model = WhisperModel("large-v3", device=device, compute_type=compute_type)
+print(device, compute_type)
+whisper_model = WhisperModel(
+    "large-v3",
+    device=device,
+    compute_type=compute_type,
+    download_root=str(MODELS_DIR / "whisper"),
+)
 print("✅ Modelos prontos!")
 
 # Schemas
