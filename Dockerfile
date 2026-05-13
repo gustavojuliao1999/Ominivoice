@@ -21,4 +21,7 @@ RUN mkdir -p cache_audios
 
 EXPOSE 8000
 
-CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]
+# RunPod Serverless entry point.
+# Para rodar a API FastAPI localmente, sobrescreva:
+#   docker run --gpus all -p 8000:8000 ominivoice uvicorn server:app --host 0.0.0.0 --port 8000
+CMD ["python", "handler.py"]

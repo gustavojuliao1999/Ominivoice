@@ -1,0 +1,68 @@
+{
+  "tests": [
+    {
+      "name": "tts_female_american",
+      "input": {
+        "endpoint": "tts",
+        "text": "Hello, this is a test of the OmniVoice text to speech system.",
+        "instruct": "female, american accent",
+        "speed": 1.0,
+        "guidance": 3.0,
+        "steps": 32
+      },
+      "timeout": 300000
+    },
+    {
+      "name": "tts_male_portuguese",
+      "input": {
+        "endpoint": "tts",
+        "text": "Olá, este é um teste de síntese de voz com sotaque português.",
+        "instruct": "male, portuguese accent, low pitch",
+        "speed": 1.0,
+        "guidance": 3.0,
+        "steps": 32
+      },
+      "timeout": 300000
+    },
+    {
+      "name": "tts_invalid_tag_returns_error",
+      "input": {
+        "endpoint": "tts",
+        "text": "Test invalid tag.",
+        "instruct": "invalid_tag"
+      },
+      "timeout": 30000
+    },
+    {
+      "name": "unknown_endpoint_returns_error",
+      "input": {
+        "endpoint": "unknown"
+      },
+      "timeout": 10000
+    }
+  ],
+  "config": {
+    "gpuTypeId": "NVIDIA GeForce RTX 4090",
+    "gpuCount": 1,
+    "env": [
+      {
+        "key": "HF_HOME",
+        "value": "/root/.cache/huggingface"
+      },
+      {
+        "key": "PYTHONUNBUFFERED",
+        "value": "1"
+      }
+    ],
+    "allowedCudaVersions": [
+      "12.7",
+      "12.6",
+      "12.5",
+      "12.4",
+      "12.3",
+      "12.2",
+      "12.1",
+      "12.0"
+    ]
+  }
+}

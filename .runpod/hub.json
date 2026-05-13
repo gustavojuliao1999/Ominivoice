@@ -1,0 +1,36 @@
+{
+  "title": "OmniVoice TTS & STT",
+  "description": "Text-to-speech and speech-to-text API powered by OmniVoice and Whisper large-v3. Supports voice cloning via reference audio, multiple accents (American, British, Portuguese, Indian and more), gender, age, and pitch control.",
+  "type": "serverless",
+  "category": "audio",
+  "iconUrl": "https://huggingface.co/datasets/huggingface/brand-assets/resolve/main/hf-logo.png",
+  "config": {
+    "runsOn": "GPU",
+    "containerDiskInGb": 20,
+    "presets": [
+      {
+        "name": "TTS - Female Portuguese Accent",
+        "defaults": {
+          "ENDPOINT": "tts",
+          "DEFAULT_INSTRUCT": "female, portuguese accent"
+        }
+      },
+      {
+        "name": "STT - Transcribe",
+        "defaults": {
+          "ENDPOINT": "transcribe"
+        }
+      }
+    ],
+    "env": [
+      {
+        "key": "HF_HOME",
+        "value": "/runpod-volume/huggingface"
+      },
+      {
+        "key": "PYTHONUNBUFFERED",
+        "value": "1"
+      }
+    ]
+  }
+}

@@ -15,3 +15,6 @@ faster-whisper
 # Utilidades e Download
 httpx
 pathlib
+
+# RunPod Serverless
+runpod
