@@ -1,0 +1,17 @@
+# Servidor Web
+fastapi
+uvicorn
+pydantic
+
+# Processamento de Áudio e IA
+omnivoice
+torch
+torchaudio
+soundfile
+numpy
+ffmpeg
+faster-whisper
+
+# Utilidades e Download
+httpx
+pathlib

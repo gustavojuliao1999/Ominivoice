@@ -1,0 +1,24 @@
+FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-runtime
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+# HuggingFace cache — override com -e HF_HOME=/runpod-volume/huggingface no RunPod
+ENV HF_HOME=/root/.cache/huggingface
+
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY server.py .
+
+RUN mkdir -p cache_audios
+
+EXPOSE 8000
+
+CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]

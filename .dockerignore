@@ -1,0 +1,8 @@
+.venv/
+.flash/
+cache_audios/
+__pycache__/
+*.pyc
+*.pyo
+.git/
+.gitignore
