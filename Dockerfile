@@ -16,10 +16,12 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY server.py .
+COPY handler.py .
 
 EXPOSE 8000
 
 # RunPod Serverless entry point.
 # Para rodar a API FastAPI localmente, sobrescreva:
 #   docker run --gpus all -p 8000:8000 ominivoice uvicorn server:app --host 0.0.0.0 --port 8000
-CMD ["python", "server.py"]
+#CMD ["python", "server.py"]
+CMD ["python", "handler.py"]
