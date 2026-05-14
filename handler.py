@@ -51,7 +51,7 @@ VALID_INSTRUCTS = list(TRADUCOES_PT_EN.values())
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 compute_type = "float16" if device == "cuda" else "int8"
-gpu_semaphore = asyncio.Semaphore(1)
+gpu_semaphore = None
 
 print("⏳ Carregando OmniVoice...")
 print(device)
@@ -106,6 +106,10 @@ def run_whisper_sync(tmp_path: str, language: Optional[str], task: str):
 
 
 async def handler(job):
+    global gpu_semaphore
+    if gpu_semaphore is None:
+        gpu_semaphore = asyncio.Semaphore(1)
+
     job_input = job["input"]
     endpoint = job_input.get("endpoint", "tts")
 
