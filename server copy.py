@@ -1,39 +1,23 @@
-
-import os
-
-# Pastas
-MODELS_DIR = Path(__file__).parent / "modelos"
-MODELS_DIR.mkdir(exist_ok=True)
-CACHE_DIR = Path("cache_audios")
-CACHE_DIR.mkdir(exist_ok=True)
-HF_CACHE_DIR = MODELS_DIR / "huggingface"
-HF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
-# Força o Hugging Face a usar esta pasta
-os.environ["HF_HOME"] = str(HF_CACHE_DIR)
-
 import io
-import torch
-import uvicorn
-import httpx
-import soundfile as sf
 import uuid
 import asyncio
+import httpx
+import uvicorn
+import soundfile as sf
 from pathlib import Path
 from typing import Optional
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 from fastapi.responses import Response, JSONResponse
 from starlette.concurrency import run_in_threadpool
-from omnivoice import OmniVoice
-from faster_whisper import WhisperModel
+
+from models import tts_model, whisper_model, device, VALID_INSTRUCTS, WHISPER_ENABLED
 
 app = FastAPI(title="OmniVoice TTS + STT API")
 
+CACHE_DIR = Path("/tmp/ominivoice_cache")
+CACHE_DIR.mkdir(exist_ok=True)
 
-
-
-
-# Mapeamento PT -> EN
 TRADUCOES_PT_EN = {
     "sotaque americano": "american accent",
     "sotaque australiano": "australian accent",
@@ -60,34 +44,9 @@ TRADUCOES_PT_EN = {
     "sussurro": "whisper",
 }
 
-VALID_INSTRUCTS = list(TRADUCOES_PT_EN.values())
-
-# Dispositivo e Semáforo
-device = "cuda" if torch.cuda.is_available() else "cpu"
-compute_type = "float16" if device == "cuda" else "int8"
 gpu_semaphore = asyncio.Semaphore(1)
 
-# Modelos
-print("⏳ Carregando OmniVoice...")
-print(device)
-tts_model = OmniVoice.from_pretrained(
-    "k2-fsa/OmniVoice",
-    device_map=f"{device}:0" if device == "cuda" else device,
-    dtype=torch.float16 if device == "cuda" else torch.float32,
-    # cache_dir=str(MODELS_DIR / "huggingface"),
-)
 
-print("⏳ Carregando Whisper small...")
-print(device, compute_type)
-whisper_model = WhisperModel(
-    "small",
-    device=device,
-    compute_type=compute_type,
-    download_root=str(MODELS_DIR / "whisper"),
-)
-print("✅ Modelos prontos!")
-
-# Schemas
 class TTSRequest(BaseModel):
     text: str
     ref_audio_url: Optional[str] = None
@@ -98,7 +57,7 @@ class TTSRequest(BaseModel):
     speed: float = 1.0
     duration: Optional[float] = None
 
-# Helpers
+
 async def get_audio_from_url(url: str) -> Path:
     file_name = url.split("/")[-1]
     file_path = CACHE_DIR / file_name
@@ -110,6 +69,7 @@ async def get_audio_from_url(url: str) -> Path:
         await run_in_threadpool(file_path.write_bytes, response.content)
     return file_path
 
+
 def run_whisper_sync(tmp_path: str, language: Optional[str], task: str):
     segments, info = whisper_model.transcribe(
         tmp_path,
@@ -119,26 +79,24 @@ def run_whisper_sync(tmp_path: str, language: Optional[str], task: str):
         vad_filter=True,
         vad_parameters={"min_silence_duration_ms": 500},
     )
-    
-    segmentos_list = []
-    texto_completo = []
+
+    texto, segs = [], []
     for seg in segments:
-        texto_completo.append(seg.text.strip())
-        segmentos_list.append({
+        texto.append(seg.text.strip())
+        segs.append({
             "inicio": round(seg.start, 2),
             "fim": round(seg.end, 2),
             "texto": seg.text.strip(),
         })
-        
-    return texto_completo, segmentos_list, info
+    return texto, segs, info
 
-# Rotas
+
 @app.get("/")
 async def get_docs():
     return JSONResponse(content={
         "rotas": {
             "POST /tts": "Gera áudio a partir de texto",
-            "POST /transcribe": "Transcreve áudio para texto (Whisper small)",
+            "POST /transcribe": "Transcreve áudio para texto (Whisper large-v3)",
         },
         "exemplo_tts": {
             "text": "Olá, esta é uma voz gerada via API.",
@@ -152,18 +110,18 @@ async def get_docs():
         ],
     })
 
+
 @app.post("/tts")
 async def generate_tts(request: TTSRequest):
     try:
-        tags_enviadas = [t.strip().lower() for t in request.instruct.split(",")]
-        tags_invalidas = [t for t in tags_enviadas if t not in VALID_INSTRUCTS]
-
-        if tags_invalidas:
+        tags = [t.strip().lower() for t in request.instruct.split(",")]
+        invalid = [t for t in tags if t not in VALID_INSTRUCTS]
+        if invalid:
             raise HTTPException(
                 status_code=400,
                 detail={
                     "erro": "Tags não suportadas encontradas",
-                    "invalidas": tags_invalidas,
+                    "invalidas": invalid,
                     "ajuda": "Consulte GET / para ver as tags válidas em inglês.",
                 },
             )
@@ -179,7 +137,6 @@ async def generate_tts(request: TTSRequest):
             "guidance_scale": request.guidance,
             "instruct": request.instruct,
         }
-        print(kwargs)
 
         if request.ref_audio_url:
             ref_path = await get_audio_from_url(request.ref_audio_url)
@@ -189,9 +146,8 @@ async def generate_tts(request: TTSRequest):
 
         async with gpu_semaphore:
             output_results = await run_in_threadpool(tts_model.generate, **kwargs)
-        
-        output_audio = output_results[0] if isinstance(output_results, list) else output_results
 
+        output_audio = output_results[0] if isinstance(output_results, list) else output_results
         audio_data = (
             output_audio.detach().cpu().numpy().squeeze()
             if hasattr(output_audio, "cpu")
@@ -206,44 +162,46 @@ async def generate_tts(request: TTSRequest):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Erro Crítico TTS: {e}")
+        print(f"Erro TTS: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/transcribe")
 async def transcribe_audio(
-    audio: UploadFile = File(..., description="Arquivo de áudio (wav, mp3, ogg, flac, m4a…)"),
-    language: Optional[str] = Form(default=None, description="Idioma do áudio (ex: 'pt', 'en'). Deixe vazio para detecção automática."),
-    task: str = Form(default="transcribe", description="'transcribe' ou 'translate'"),
+    audio: UploadFile = File(...),
+    language: Optional[str] = Form(default=None),
+    task: str = Form(default="transcribe"),
 ):
+    if not WHISPER_ENABLED:
+        raise HTTPException(status_code=503, detail="Whisper desativado. Defina WHISPER_ENABLED=true para usar transcrição.")
+
     tmp_path = None
     try:
         audio_bytes = await audio.read()
         ext = Path(audio.filename).suffix if audio.filename else ".tmp"
-        tmp_path = CACHE_DIR / f"{uuid.uuid4()}{ext}"
-        
+        tmp_path = Path(f"/tmp/{uuid.uuid4()}{ext}")
         await run_in_threadpool(tmp_path.write_bytes, audio_bytes)
 
         async with gpu_semaphore:
-            texto_completo, segmentos_list, info = await run_in_threadpool(
+            texto, segs, info = await run_in_threadpool(
                 run_whisper_sync, str(tmp_path), language, task
             )
 
         return JSONResponse(content={
-            "texto": " ".join(texto_completo),
+            "texto": " ".join(texto),
             "idioma_detectado": info.language,
             "probabilidade_idioma": round(info.language_probability, 4),
             "duracao_segundos": round(info.duration, 2),
-            "segmentos": segmentos_list,
+            "segmentos": segs,
         })
 
     except Exception as e:
-        print(f"Erro Crítico STT: {e}")
+        print(f"Erro STT: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-        
     finally:
         if tmp_path and tmp_path.exists():
             await run_in_threadpool(tmp_path.unlink, missing_ok=True)
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

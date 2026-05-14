@@ -1,0 +1,8 @@
+{
+  "input": {
+    "endpoint": "tts",
+    "text": "Olá, esta é uma voz de teste.",
+    "instruct": "female, portuguese accent",
+    "speed": 1.0
+  }
+}

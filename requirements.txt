@@ -9,12 +9,11 @@ torch
 torchaudio
 soundfile
 numpy
-ffmpeg
 faster-whisper
 
-# Utilidades e Download
+# Utilidades
 httpx
-pathlib
+python-dotenv
 
 # RunPod Serverless
 runpod
