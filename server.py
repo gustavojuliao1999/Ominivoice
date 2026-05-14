@@ -1,5 +1,6 @@
 
 import os
+from pathlib import Path
 
 # Pastas
 MODELS_DIR = Path(__file__).parent / "modelos"
@@ -18,7 +19,6 @@ import httpx
 import soundfile as sf
 import uuid
 import asyncio
-from pathlib import Path
 from typing import Optional
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
