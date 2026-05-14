@@ -105,23 +105,23 @@ def run_whisper_sync(tmp_path: str, language: Optional[str], task: str):
     return texto_completo, segmentos_list, info
 
 
-def handler(job):
+def handler(event):
     global gpu_semaphore
     if gpu_semaphore is None:
         gpu_semaphore = asyncio.Semaphore(1)
 
-    job_input = job["input"]
-    endpoint = job_input.get("endpoint", "tts")
+    event_input = event["input"]
+    endpoint = event_input.get("endpoint", "tts")
 
     if endpoint == "tts":
-        text = job_input.get("text", "")
-        instruct = job_input.get("instruct", "female, portuguese accent")
-        speed = float(job_input.get("speed", 1.0))
-        guidance = float(job_input.get("guidance", 3.0))
-        steps = int(job_input.get("steps", 32))
-        duration = job_input.get("duration", None)
-        ref_audio_url = job_input.get("ref_audio_url", None)
-        ref_text = job_input.get("ref_text", "")
+        text = event_input.get("text", "")
+        instruct = event_input.get("instruct", "female, portuguese accent")
+        speed = float(event_input.get("speed", 1.0))
+        guidance = float(event_input.get("guidance", 3.0))
+        steps = int(event_input.get("steps", 32))
+        duration = event_input.get("duration", None)
+        ref_audio_url = event_input.get("ref_audio_url", None)
+        ref_text = event_input.get("ref_text", "")
 
         tags_enviadas = [t.strip().lower() for t in instruct.split(",")]
         tags_invalidas = [t for t in tags_enviadas if t not in VALID_INSTRUCTS]
@@ -163,10 +163,10 @@ def handler(job):
         return {"audio_base64": base64.b64encode(buffer.read()).decode("utf-8")}
 
     elif endpoint == "transcribe":
-        language = job_input.get("language", None)
-        task = job_input.get("task", "transcribe")
-        audio_url = job_input.get("audio_url", None)
-        audio_base64 = job_input.get("audio_base64", None)
+        language = event_input.get("language", None)
+        task = event_input.get("task", "transcribe")
+        audio_url = event_input.get("audio_url", None)
+        audio_base64 = event_input.get("audio_base64", None)
 
         if not audio_url and not audio_base64:
             return {"error": "Forneça 'audio_url' ou 'audio_base64' no input."}
