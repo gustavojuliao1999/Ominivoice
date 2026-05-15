@@ -105,7 +105,7 @@ def run_whisper_sync(tmp_path: str, language: Optional[str], task: str):
     return texto_completo, segmentos_list, info
 
 
-def handler(event):
+async def handler(event):
     global gpu_semaphore
     if gpu_semaphore is None:
         gpu_semaphore = asyncio.Semaphore(1)
