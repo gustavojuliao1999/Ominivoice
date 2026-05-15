@@ -7,6 +7,7 @@
   "config": {
     "runsOn": "GPU",
     "containerDiskInGb": 20,
+    "gpuCount": 1,
     "presets": [
       {
         "name": "TTS - Female Portuguese Accent",
