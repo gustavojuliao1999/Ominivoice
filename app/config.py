@@ -17,6 +17,10 @@ os.environ.setdefault("HF_HOME", str(HF_CACHE_DIR))
 
 BASE_MODEL_ID = os.environ.get("OMNIVOICE_MODEL_ID", "k2-fsa/OmniVoice")
 WHISPER_MODEL_SIZE = os.environ.get("WHISPER_MODEL", "small")
+# Overrides para GPUs com pouca VRAM ou sem suporte eficiente a float16 (ex.:
+# Pascal/GTX 10xx) — permitem rodar o Whisper na CPU e/ou forçar compute_type.
+WHISPER_DEVICE = os.environ.get("WHISPER_DEVICE")
+WHISPER_COMPUTE_TYPE = os.environ.get("WHISPER_COMPUTE_TYPE")
 
 # Mapeamento PT -> EN das tags de instruct suportadas pelo modelo base.
 TRADUCOES_PT_EN = {

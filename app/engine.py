@@ -22,7 +22,8 @@ from app import config
 logger = logging.getLogger(__name__)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-compute_type = "float16" if device == "cuda" else "int8"
+whisper_device = config.WHISPER_DEVICE or device
+compute_type = config.WHISPER_COMPUTE_TYPE or ("float16" if whisper_device == "cuda" else "int8")
 
 print("⏳ Carregando OmniVoice...")
 print(device)
@@ -33,10 +34,10 @@ tts_model = OmniVoice.from_pretrained(
 )
 
 print("⏳ Carregando Whisper", config.WHISPER_MODEL_SIZE, "...")
-print(device, compute_type)
+print(whisper_device, compute_type)
 whisper_model = WhisperModel(
     config.WHISPER_MODEL_SIZE,
-    device=device,
+    device=whisper_device,
     compute_type=compute_type,
     download_root=str(config.MODELS_DIR / "whisper"),
 )

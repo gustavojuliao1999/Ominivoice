@@ -1,0 +1,234 @@
+{
+  "info": {
+    "name": "OmniVoice TTS + STT API",
+    "description": "Collection para a API OmniVoice (TTS via OmniVoice, STT via Whisper, gerenciamento de vozes fine-tuned via LoRA). Veja GET / para a documentação embutida da API.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "b9f1a6b0-6e5b-4e2a-9c1d-0f0a2b6a9f11"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000", "type": "string" },
+    { "key": "voice_id", "value": "joao", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Docs",
+      "item": [
+        {
+          "name": "GET / (rotas, exemplos, tags válidas)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/", "host": ["{{base_url}}"], "path": [""] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "TTS",
+      "item": [
+        {
+          "name": "POST /tts (zero-shot, sem áudio de referência)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Olá, esta é uma voz gerada via API.\",\n  \"instruct\": \"female, portuguese accent, low pitch\",\n  \"preset\": \"balanced\",\n  \"speed\": 1.0\n}"
+            },
+            "url": { "raw": "{{base_url}}/tts", "host": ["{{base_url}}"], "path": ["tts"] },
+            "description": "Retorna audio/wav no corpo da resposta. Headers de resposta: X-Preset (e X-Voice-Id se voice_id for usado)."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /tts (zero-shot, com ref_audio_url)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Olá, esta é uma voz clonada a partir de um áudio de referência.\",\n  \"ref_audio_url\": \"https://exemplo.com/audio_referencia.wav\",\n  \"ref_text\": \"Transcrição do áudio de referência, se souber.\",\n  \"preset\": \"balanced\",\n  \"speed\": 1.0\n}"
+            },
+            "url": { "raw": "{{base_url}}/tts", "host": ["{{base_url}}"], "path": ["tts"] }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /tts (voz treinada via voice_id)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Olá, esta é a voz do João.\",\n  \"voice_id\": \"{{voice_id}}\",\n  \"preset\": \"fast\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/tts", "host": ["{{base_url}}"], "path": ["tts"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "STT",
+      "item": [
+        {
+          "name": "POST /transcribe",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "audio", "type": "file", "src": [] },
+                { "key": "language", "value": "pt", "type": "text", "description": "Deixe vazio para detecção automática" },
+                { "key": "task", "value": "transcribe", "type": "text", "description": "'transcribe' ou 'translate'" }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/transcribe", "host": ["{{base_url}}"], "path": ["transcribe"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Voices",
+      "item": [
+        {
+          "name": "POST /voices (criar voz)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"voice_id\": \"{{voice_id}}\",\n  \"name\": \"João\",\n  \"language\": \"pt\",\n  \"description\": \"Voz de teste\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/voices", "host": ["{{base_url}}"], "path": ["voices"] }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /voices (listar)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/voices", "host": ["{{base_url}}"], "path": ["voices"] }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /voices/{voice_id} (status)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/voices/{{voice_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["voices", "{{voice_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /voices/{voice_id}/audio (modo paired)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "mode", "value": "paired", "type": "text" },
+                { "key": "files", "type": "file", "src": [] },
+                { "key": "files", "type": "file", "src": [] },
+                {
+                  "key": "texts",
+                  "value": "[\"Transcrição do primeiro áudio.\", \"Transcrição do segundo áudio.\"]",
+                  "type": "text",
+                  "description": "JSON com a transcrição de cada arquivo, na mesma ordem de 'files'"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/voices/{{voice_id}}/audio",
+              "host": ["{{base_url}}"],
+              "path": ["voices", "{{voice_id}}", "audio"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /voices/{voice_id}/audio (modo longform)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "mode", "value": "longform", "type": "text" },
+                { "key": "files", "type": "file", "src": [] }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/voices/{{voice_id}}/audio",
+              "host": ["{{base_url}}"],
+              "path": ["voices", "{{voice_id}}", "audio"]
+            },
+            "description": "Segmentação e transcrição automáticas (via Whisper) — não precisa enviar 'texts'."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /voices/{voice_id}/train",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"steps\": null,\n  \"learning_rate\": null,\n  \"batch_size\": null,\n  \"gradient_accumulation_steps\": null,\n  \"eval_every\": null,\n  \"r\": null,\n  \"lora_alpha\": null,\n  \"lora_dropout\": null\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/voices/{{voice_id}}/train",
+              "host": ["{{base_url}}"],
+              "path": ["voices", "{{voice_id}}", "train"]
+            },
+            "description": "Todos os campos são opcionais; omita ou deixe null para usar os defaults derivados do dataset (ver app/config.py TRAIN_DEFAULTS)."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /voices/{voice_id}/evaluate",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sample_texts\": null,\n  \"num_samples\": 3\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/voices/{{voice_id}}/evaluate",
+              "host": ["{{base_url}}"],
+              "path": ["voices", "{{voice_id}}", "evaluate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /voices/{voice_id}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/voices/{{voice_id}}?force=false",
+              "host": ["{{base_url}}"],
+              "path": ["voices", "{{voice_id}}"],
+              "query": [
+                { "key": "force", "value": "false", "description": "true cancela o treino em andamento (se houver) e apaga mesmo assim" }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
