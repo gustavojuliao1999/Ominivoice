@@ -6,6 +6,7 @@ ENV PYTHONUNBUFFERED=1
 ENV HF_HOME=/root/.cache/huggingface
 
 RUN apt-get update && apt-get install -y \
+    build-essential \
     ffmpeg \
     git \
     && rm -rf /var/lib/apt/lists/*
@@ -15,6 +16,7 @@ WORKDIR /workspace
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+COPY app/ ./app/
 COPY server.py .
 COPY handler.py .
 

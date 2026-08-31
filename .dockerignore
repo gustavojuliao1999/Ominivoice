@@ -1,6 +1,7 @@
 .venv/
 .flash/
 modelos/
+voices/
 cache_audios/
 __pycache__/
 *.pyc

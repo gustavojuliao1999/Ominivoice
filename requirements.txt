@@ -2,14 +2,22 @@
 fastapi
 uvicorn
 pydantic
+python-multipart
 
 # Processamento de Áudio e IA
-omnivoice
+omnivoice>=0.2.1
 torch
 torchaudio
 soundfile
 numpy
 faster-whisper
+
+# Fine-tuning de voz (LoRA)
+peft>=0.11.0
+
+# Avaliação de voz (similaridade de locutor + WER)
+resemblyzer
+jiwer
 
 # Utilidades
 httpx
